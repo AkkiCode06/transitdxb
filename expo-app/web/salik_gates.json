@@ -1,0 +1,12 @@
+[
+  { "name": "Al Barsha",          "lat": 25.118, "lng": 55.197 },
+  { "name": "Al Safa North",     "lat": 25.183, "lng": 55.253 },
+  { "name": "Al Safa South",     "lat": 25.150, "lng": 55.228 },
+  { "name": "Jebel Ali",         "lat": 25.045, "lng": 55.110 },
+  { "name": "Business Bay",      "lat": 25.215, "lng": 55.340 },
+  { "name": "Al Garhoud Bridge","lat": 25.241, "lng": 55.337 },
+  { "name": "Al Maktoum Bridge","lat": 25.252, "lng": 55.321 },
+  { "name": "Airport Tunnel",   "lat": 25.263, "lng": 55.386 },
+  { "name": "Al Mamzar North",  "lat": 25.295, "lng": 55.352 },
+  { "name": "Al Mamzar South",  "lat": 25.295, "lng": 55.352 }
+]

@@ -1,0 +1,45 @@
+/* Reset */
+* {margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;}
+
+/* Full‑screen map */
+#map {position:absolute;top:0;left:0;right:0;bottom:0;}
+
+/* Glass‑morphic control panel */
+.control-panel {
+  position:absolute;
+  top:20px;right:20px;
+  width:300px;
+  padding:20px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.12);
+  color:#222;
+  transition:transform 0.2s ease;
+}
+.control-panel:hover {transform:translateY(-2px);}
+.control-panel h2 {margin-bottom:12px;font-size:1.3rem;color:#111;}
+.field {margin-bottom:12px;}
+.field label {display:block;font-size:0.85rem;color:#555;margin-bottom:4px;}
+.field input {
+  width:100%;padding:8px 12px;
+  border:none;border-radius:8px;
+  background:rgba(255,255,255,0.6);
+  font-size:0.95rem;
+}
+.field input:focus {outline:none;background:#fff;}
+button.primary {
+  width:100%;padding:10px;
+  border:none;border-radius:8px;
+  background:linear-gradient(135deg,#ff8a00,#e52e71);
+  color:#fff;font-weight:600;cursor:pointer;
+  transition:background 0.3s ease;
+}
+button.primary:hover {background:linear-gradient(135deg,#e52e71,#ff8a00);}
+.info-box {
+  margin-top:16px;padding:12px;
+  background:rgba(255,255,255,0.4);
+  border-radius:8px;
+  font-size:0.9rem;
+}
+.hidden {display:none;}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UAE Best‑Trip Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+3v9b+eWgR5vK2R4+QyMZs6v0Y4VfH0a0B2J9y2jU=" crossorigin="" />
+  <!-- Google Places (Autocomplete) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&libraries=places"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="control-panel">
+    <h2>Plan Your Trip</h2>
+    <div class="field">
+      <label>Pickup (auto‑filled):</label>
+      <input id="pickup" type="text" disabled />
+    </div>
+    <div class="field">
+      <label>Destination:</label>
+      <input id="dest-input" type="text" placeholder="Search a place…" />
+    </div>
+    <button id="planBtn" class="primary">Show Route</button>
+    <div id="routeInfo" class="info-box hidden">
+      <p><strong>Distance:</strong> <span id="dist"></span> km</p>
+      <p><strong>Duration (traffic‑aware):</strong> <span id="dur"></span> min</p>
+      <p><strong>Estimated Fare (RTA Taxi):</strong> <span id="fare"></span> AED</p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1c+9C5DgI4NfK7b3EwJ9cU+LQ3P7gGJ2XK1tM8Yk=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

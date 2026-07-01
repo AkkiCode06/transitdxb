@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UAE Best‑Trip Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+3v9b+eWgR5vK2R4+QyMZs6v0Y4VfH0a0B2J9y2jU=" crossorigin="" />
+  <!-- Google Places (Autocomplete) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&libraries=places"></script>
+  <style>
+/* Reset */
+* {margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;}
+
+/* Full‑screen map */
+#map {position:absolute;top:0;left:0;right:0;bottom:0;}
+
+/* Glass‑morphic control panel */
+.control-panel {
+  position:absolute;
+  top:20px;right:20px;
+  width:300px;
+  padding:20px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.12);
+  color:#222;
+  transition:transform 0.2s ease;
+}
+.control-panel:hover {transform:translateY(-2px);}
+.control-panel h2 {margin-bottom:12px;font-size:1.3rem;color:#111;}
+.field {margin-bottom:12px;}
+.field label {display:block;font-size:0.85rem;color:#555;margin-bottom:4px;}
+.field input {
+  width:100%;padding:8px 12px;
+  border:none;border-radius:8px;
+  background:rgba(255,255,255,0.6);
+  font-size:0.95rem;
+}
+.field input:focus {outline:none;background:#fff;}
+button.primary {
+  width:100%;padding:10px;
+  border:none;border-radius:8px;
+  background:linear-gradient(135deg,#ff8a00,#e52e71);
+  color:#fff;font-weight:600;cursor:pointer;
+  transition:background 0.3s ease;
+}
+button.primary:hover {background:linear-gradient(135deg,#e52e71,#ff8a00);}
+.info-box {
+  margin-top:16px;padding:12px;
+  background:rgba(255,255,255,0.4);
+  border-radius:8px;
+  font-size:0.9rem;
+}
+.hidden {display:none;}
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="control-panel">
+    <h2>Plan Your Trip</h2>
+    <div class="field">
+      <label>Pickup (auto‑filled):</label>
+      <input id="pickup" type="text" disabled />
+    </div>
+    <div class="field">
+      <label>Destination:</label>
+      <input id="dest-input" type="text" placeholder="Search a place…" />
+    </div>
+    <button id="planBtn" class="primary">Show Route</button>
+    <div id="routeInfo" class="info-box hidden">
+      <p><strong>Distance:</strong> <span id="dist"></span> km</p>
+      <p><strong>Duration (traffic‑aware):</strong> <span id="dur"></span> min</p>
+      <p><strong>Estimated Fare (RTA Taxi):</strong> <span id="fare"></span> AED</p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1c+9C5DgI4NfK7b3EwJ9cU+LQ3P7gGJ2XK1tM8Yk=" crossorigin=""></script>
+  <script>
+    window.SALIK_GATES = [
+      { "name": "Al Barsha",          "lat": 25.118, "lng": 55.197 },
+      { "name": "Al Safa North",     "lat": 25.183, "lng": 55.253 },
+      { "name": "Al Safa South",     "lat": 25.150, "lng": 55.228 },
+      { "name": "Jebel Ali",         "lat": 25.045, "lng": 55.110 },
+      { "name": "Business Bay",      "lat": 25.215, "lng": 55.340 },
+      { "name": "Al Garhoud Bridge","lat": 25.241, "lng": 55.337 },
+      { "name": "Al Maktoum Bridge","lat": 25.252, "lng": 55.321 },
+      { "name": "Airport Tunnel",   "lat": 25.263, "lng": 55.386 },
+      { "name": "Al Mamzar North",  "lat": 25.295, "lng": 55.352 },
+      { "name": "Al Mamzar South",  "lat": 25.295, "lng": 55.352 }
+    ];
+
+    /* globals L */
+    (async () => {
+      // ---- 1. Initialise map --------------------------------------------------
+      const map = L.map('map', { zoomControl: false }).setView([25.2048, 55.2708], 11); // Dubai centre
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map);
+
+      // ---- 2. Load Salik gates & render markers ---------------------------------
+      const gateData = window.SALIK_GATES || [];
+      const gateIcon = L.divIcon({
+        className: 'salik-gate-icon',
+        html: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#e52e71"><path d="M12 2a10 10 0 00-3.16 19.44c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03 .88 1.5 2.31 1.07 2.87 .82 .09-.64 .35-1.07 .63-1.32-2.22-.25-4.56-1.11-4.56-4.95 0-1.09 .39-1.99 1.03-2.69-.1-.25-.45-1.27 .1-2.65 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 7.8c.85.004 1.71.114 2.51.333 1.91-1.29 2.75-1.02 2.75-1.02 .55 1.38 .2 2.4 .1 2.65 .64 .7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95 .36 .31 .68 .92 .68 1.86v2.76c0 .27 .18 .58 .69 .48A10 10 0 0012 2z"/></svg>`
+      });
+
+      gateData.forEach(g => {
+        L.marker([g.lat, g.lng], { icon: gateIcon })
+          .addTo(map)
+          .bindTooltip(g.name, { direction: 'top', offset: [0, -12] });
+      });
+
+      // ---- 3. Geolocation – fill pickup field -----------------------------------
+      const pickupInput = document.getElementById('pickup');
+      let currentPos = null;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const { latitude, longitude } = pos.coords;
+            currentPos = [latitude, longitude];
+            pickupInput.value = `Current location (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`;
+            L.marker(currentPos, { draggable: false })
+              .addTo(map)
+              .bindPopup('You are here')
+              .openPopup();
+            map.setView(currentPos, 13);
+          },
+          err => {
+            console.warn('Geolocation error →', err);
+            pickupInput.value = 'Unable to get location';
+          },
+          { enableHighAccuracy: true }
+        );
+      } else {
+        pickupInput.value = 'Geolocation not supported';
+      }
+
+      // ---- 4. Google Places Autocomplete ----------------------------------------
+      const destInput = document.getElementById('dest-input');
+      const autocomplete = new google.maps.places.Autocomplete(destInput, {
+        componentRestrictions: { country: 'AE' },
+        fields: ['geometry', 'name', 'formatted_address'],
+      });
+
+      let destination = null;
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+          alert('No geometry data for the selected place.');
+          return;
+        }
+        destination = [place.geometry.location.lat(), place.geometry.location.lng()];
+        L.marker(destination, { draggable: false })
+          .addTo(map)
+          .bindPopup(`<strong>${place.name}</strong>`)
+          .openPopup();
+      });
+
+      // ---- 5. Route + fare calculation (stubbed) ---------------------------------
+      const planBtn = document.getElementById('planBtn');
+      const routeInfo = document.getElementById('routeInfo');
+      const distSpan = document.getElementById('dist');
+      const durSpan = document.getElementById('dur');
+      const fareSpan = document.getElementById('fare');
+
+      function computeRtaFare(distanceKm, durationMin, isNight) {
+        const perKm = 2.45;
+        const perMin = 0.5; // 50 fils per minute
+        const baseDay = 9;   // AED (6‑8 AM / 10‑4 PM / 8‑10 PM)
+        const baseNight = 10; // AED (10 PM‑6 AM)
+        const minFare = isNight ? 13 : 12; // street‑hail / e‑hail minimum
+        const base = isNight ? baseNight : baseDay;
+        const raw = base + distanceKm * perKm + durationMin * perMin;
+        return Math.max(raw, minFare).toFixed(2);
+      }
+
+      async function fetchRoute(orig, dest) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${orig[1]},${orig[0]};${dest[1]},${dest[0]}?overview=full&geometries=geojson`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data.code !== 'Ok') throw new Error('Routing error');
+        return data.routes[0];
+      }
+
+      let routeLayer = null;
+
+      planBtn.addEventListener('click', async () => {
+        if (!currentPos || !destination) {
+          alert('Both current location and a destination are required.');
+          return;
+        }
+        try {
+          const route = await fetchRoute(currentPos, destination);
+          const geo = route.geometry;
+          if (routeLayer) map.removeLayer(routeLayer);
+          routeLayer = L.geoJSON(geo, { style: { color: '#e52e71', weight: 5, opacity: 0.8 } }).addTo(map);
+          map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+
+          const distanceKm = (route.distance / 1000).toFixed(2);
+          const durationMin = Math.round(route.duration / 60);
+          const isNight = (new Date()).getHours() >= 22 || (new Date()).getHours() < 6;
+
+          distSpan.textContent = distanceKm;
+          durSpan.textContent = durationMin;
+          fareSpan.textContent = computeRtaFare(Number(distanceKm), durationMin, isNight);
+          routeInfo.classList.remove('hidden');
+        } catch (e) {
+          console.error(e);
+          alert('Failed to compute the route. See console for details.');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
